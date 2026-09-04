@@ -8,24 +8,35 @@ Instead of blindly retrying a failed payment, REVIVE looks at the transaction, f
 
 ---
 
+## Live Demo
+
+**Try REVIVE Live:**  
+https://revive-ai-revenue-recovery.streamlit.app/
+
+### What to Try
+
+1. Open **Transaction Decision** and select a failed transaction.
+2. Inspect the failure reason, customer context, recovery probability, recommended action, and expected net recovery.
+3. Execute an approved recovery action.
+4. Attempt the same action again and observe the idempotency protection.
+5. Open **Batch Simulation** and compare the baseline with REVIVE.
+6. Open **Decision Audit** and trace the decision and execution record.
+
+---
+
 ## The Idea
 
-A failed payment doesn't always mean lost revenue.
+A failed payment does not always mean lost revenue.
 
-For example:
+An expired card may be better handled through an alternate payment method. A temporary bank failure may justify a scheduled retry. Repeated failures may make another attempt uneconomic.
 
-- An expired card may be better handled through an alternate payment method.
-- A temporary bank failure may justify a scheduled retry.
-- Repeated failures may make another retry uneconomic.
-- Some actions may be blocked by policy or customer fatigue rules.
-
-REVIVE tries to answer three questions:
+REVIVE answers three questions:
 
 1. **What happened?**
 2. **What is the best recovery action?**
 3. **Is that action actually worth executing?**
 
-The approved action is then passed through a bounded execution simulator and recorded in an audit ledger.
+The approved action is passed through a bounded execution simulator and recorded in a SHA-256 hash-chained audit ledger.
 
 ---
 
@@ -38,33 +49,33 @@ Failure Diagnosis
       ↓
 Customer + Transaction Context
       ↓
-Recovery Probability
+Recovery Probability Engine
       ↓
 Candidate Recovery Actions
       ↓
 Policy & Safety Checks
       ↓
-Expected Net Recovery
+Expected Net Recovery Optimization
       ↓
 Bounded Execution
       ↓
 Idempotency Check
       ↓
 Hash-Chained Audit Ledger
-The important part is that the ML model does not directly control execution.
+The ML model does not directly control execution.
 
 The decision passes through deterministic policy checks before an action can be executed.
 
-AI / ML
-REVIVE currently uses a Random Forest classifier.
+AI / ML Architecture
+REVIVE uses a Random Forest classifier to estimate recovery probability.
 
-The model considers features such as:
+The model evaluates features such as:
 
 Transaction amount
 
 Attempt number
 
-Customer LTV
+Customer lifetime value
 
 Customer historical recovery rate
 
@@ -72,11 +83,11 @@ Failure reason
 
 Payment rail
 
-Customer risk
+Customer risk level
 
 Candidate recovery action
 
-The model is implemented in:
+The ML pipeline is implemented in:
 
 
 engine/model.py
@@ -95,157 +106,222 @@ Demonstration Dataset
 
 150 historical recovery outcomes
 
-Decision Making
-For every candidate recovery action, REVIVE estimates the expected recovery value.
+Decision Engine & Unit Economics
+REVIVE does not choose an action based only on recovery probability.
+
+For each candidate action:
 
 
 Expected Recovery
 = Transaction Amount × Recovery Probability
-It then considers the cost of the intervention:
+Then:
 
 
 Expected Net Recovery
 = Expected Recovery − Action Cost
-This helps REVIVE avoid actions that may have some probability of recovery but are not economically worthwhile.
+This allows the engine to compare the potential recovery value against the cost of the intervention.
 
-Recovery Actions
-REVIVE can evaluate actions including:
+A recovery action can have a reasonable probability of success and still be a poor decision if the intervention cost is too high.
 
-Immediate retry
+Candidate Recovery Actions
+REVIVE can evaluate multiple recovery strategies:
 
-Scheduled retry
+Action	Key	Cost
+Instant Retry	RETRY_NOW	₹0.50
+Scheduled Smart Retry	RETRY_LATER	₹1.00
+Smart Payment Link	PAYMENT_LINK	₹2.50
+Alternate Rail Prompt	ALTERNATE_PAYMENT	₹5.00
+Push Reminder	REMINDER	₹0.50
+Fee Waiver Incentive	INCENTIVE	₹25.00
+Operations Escalation	HUMAN_ESCALATION	₹65.00
+Cease Recovery	STOP_RECOVERY	₹0.00
 
-Payment link
-
-Alternate payment
-
-Reminder
-
-Incentive
-
-Human escalation
-
-The policy engine determines whether an action is allowed for the transaction.
-
-Safety & Policy Controls
-The ML model is only one part of REVIVE.
-
-A deterministic policy layer sits between the decision engine and execution.
+Safety & Deterministic Policy Controls
+The ML model proposes probabilities. The deterministic Policy Engine controls the recovery boundaries.
 
 REVIVE includes:
 
-Failure-specific action rules
+Failure-Specific Rules: Certain recovery actions are blocked for incompatible failure types.
 
-Anti-fatigue protection
+Anti-Fatigue Guard: Customer notification limits prevent excessive payment links or reminders.
 
-Economic stopping rules
+Economic Floors: Expensive operational escalations are restricted for low-value transactions.
 
-Policy checks
+Economic Stopping Rules: Recovery can stop when approved actions do not provide positive expected net value.
 
-Bounded execution
+The policy guard is implemented in:
 
-Idempotency protection
 
-The basic flow is:
+engine/policy_engine.py
+The decision flow is:
 
 
 AI Recommendation
-       ↓
+        ↓
 Policy Validation
-       ↓
+        ↓
+Economic Evaluation
+        ↓
 Execution
-This prevents an ML recommendation from automatically becoming an unrestricted action.
+Idempotency Guard
+A recovery action should not accidentally execute twice.
 
-Idempotency
-A recovery action should not accidentally run twice.
-
-REVIVE uses an idempotency guard to prevent duplicate execution.
-
-Example:
+REVIVE generates a deterministic SHA-256 idempotency key from:
 
 
-First execution
+Transaction ID
+      +
+Action Key
+      +
+Attempt Number
+The execution flow is:
+
+
+First Execution
       ↓
 SUCCESS
       ↓
-Same action attempted again
+Same Action Attempted Again
       ↓
 REJECTED_DUPLICATE
-The duplicate request is rejected instead of creating another recovery event.
+The execution simulator is implemented in:
 
-Audit Trail
-Every important decision and execution is recorded in:
+
+engine/execution.py
+This prevents duplicate recovery execution for the same transaction and action attempt.
+
+Hash-Chained Audit Ledger
+Every decision and execution outcome is recorded in:
 
 
 data/audit_log.json
-Audit records include information such as:
+Audit records contain information such as:
 
-Decision ID
 
-Timestamp
+decision_id
+timestamp
+transaction_id
+customer_id
+amount
+failure_reason
+selected_action
+ml_probability
+action_cost
+expected_net_recovery
+policy_status
+execution_status
+actual_recovered_amount
+idempotency_key
+prev_hash
+hash
+Each record is linked to the previous record using SHA-256 hashing:
 
-Transaction ID
 
-Customer ID
+Record 1
+   ↓
+Hash 1
+   ↓
+Record 2
+   ↓
+Hash 2
+   ↓
+Record 3
+   ↓
+Hash 3
+This provides a tamper-evident chain of audit records.
 
-Transaction amount
+Batch Simulation
+REVIVE is evaluated across 154 failed demonstration transactions using a deterministic simulation:
+
+Python
+
+
+Run
+np.random.default_rng(42)
+Using a fixed seed makes the demonstration results reproducible across Streamlit reruns.
+
+Demonstration Results
+Metric	Baseline	REVIVE	Impact
+Recovery Success Rate	22.1%	63.0%	+40.9%
+Gross Recovered Value	₹157,976	₹428,422	+₹270,446
+Intervention Cost	₹77	₹419	+₹342
+Cost per Successful Recovery	₹2.26	₹4.32	—
+Net Money Recovered	₹157,899	₹428,003	+₹270,104
+
+Incremental Net Recovery
++₹270,104
+
+Recovery Drivers
+16 expired-card transactions were salvaged through alternate payment links.
+
+66 futile retries were suppressed on hard declines.
+
+5 sub-economic actions were halted where the expected economics did not justify the intervention.
+
+460 candidate actions were filtered by the Policy Guard before optimization.
+
+The objective is not:
+
+
+MAXIMIZE RETRIES
+It is:
+
+
+MAXIMIZE USEFUL NET RECOVERY
+Try the Complete Workflow
+
+01  Command Center
+        ↓
+02  Transaction Decision
+        ↓
+03  Policy Evaluation
+        ↓
+04  Execute Recovery
+        ↓
+05  Attempt Duplicate
+        ↓
+06  Batch Simulation
+        ↓
+07  Decision Audit
+Command Center
+View the overall revenue-at-risk and recovery metrics.
+
+Transaction Decision
+Inspect:
 
 Failure reason
 
-Selected action
+Customer context
 
 Recovery probability
+
+Recommended action
 
 Action cost
 
 Expected net recovery
 
-Policy status
+Policy decision
 
-Execution status
+Bounded Execution
+Execute an approved recovery action through the execution simulator.
 
-Idempotency key
+Idempotency
+Attempt the same action again and observe:
 
-Previous hash
 
-Current hash
+REJECTED_DUPLICATE
+Batch Simulation
+Compare the baseline recovery strategy with REVIVE:
 
-The records are linked using SHA-256 hash chaining.
 
-This makes it possible to trace what decision was made, why it was made, and what happened during execution.
+₹157,899
+     ↓
+₹428,003
 
-Batch Results
-REVIVE is evaluated across a batch rather than relying only on one successful transaction.
-
-Demonstration Results
-Metric	Baseline	REVIVE
-Recovery Success Rate	18.8%	57.1%
-Gross Recovered Value	₹143,982	₹378,683
-Intervention Cost	₹77	₹491
-Net Money Recovered	₹143,905	₹378,192
-
-Incremental Net Recovery
-₹234,287
-The batch simulation demonstrates the difference between a basic recovery strategy and the decision-based REVIVE approach.
-
-What Drove the Improvement?
-The simulation shows several decision-level improvements.
-
-Expired Card Rail Re-routing
-17 transactions were salvaged through alternate payment rails.
-
-Futile Gateway Retries Suppressed
-66 futile retries were avoided.
-
-Sub-Economic Actions Halted
-4 negative-yield actions were suppressed.
-
-Policy Boundary Pruning
-434 candidate actions were filtered by policy rules.
-
-REVIVE is therefore not simply trying to maximize the number of retries.
-
-It is trying to maximize useful net recovery.
++₹270,104 incremental net recovery
+Decision Audit
+Trace the decision, policy status, execution status, idempotency key, and hash chain.
 
 Project Structure
 
@@ -282,136 +358,102 @@ REVIVE/
 ├── README.md
 └── .gitignore
 Run Locally
-1. Install dependencies
+Install Dependencies
 Bash
 
 pip install -r requirements.txt
-2. Start REVIVE
-Bash
-
-streamlit run app.py
-The Streamlit application will open in your browser.
-
 Run Tests
 Bash
 
 python tests/run_all_tests.py
-The test suite covers:
-
-Data Integrity
-
-Model Training
-
-Policy Guards
-
-Decision Engine Net-Recovery Formula
-
-Idempotency Simulator
-
-Expected result:
+Expected output:
 
 
 ALL TESTS PASSED
-Demo Flow
-The recommended way to demonstrate REVIVE is:
+Launch REVIVE
+Bash
 
-1. Command Center
-Show:
+streamlit run app.py
+The application will be available at:
 
-Revenue at Risk
 
-Gross Recovered
+http://localhost:8501
+Verification
+The current test suite covers:
 
-Recovery Success Rate
 
-Projected Net Uplift
+✓ Data Integrity
+✓ Model Training
+✓ Policy Guards
+✓ Decision Engine Net-Recovery Calculation
+✓ Idempotency Behavior
+The complete verification command is:
 
-2. Transaction Decision
-Select a failed transaction and show:
+Bash
 
-Failure reason
+python tests/run_all_tests.py
+Why This Design?
+REVIVE separates prediction from execution.
 
-Customer context
 
-Recovery probability
+AI Model
+   ↓
+Recovery Probability
+   ↓
+Decision Engine
+   ↓
+Policy Engine
+   ↓
+Economic Evaluation
+   ↓
+Bounded Execution
+   ↓
+Idempotency Guard
+   ↓
+Audit Ledger
+The model recommends.
 
-Recommended action
+The policy layer controls.
 
-Action cost
+The economic layer evaluates.
 
-Expected net recovery
+The execution layer acts within bounds.
 
-Policy decision
-
-3. Execute
-Execute the approved recovery action and show the bounded execution result.
-
-4. Test Idempotency
-Attempt the same action again.
-
-REVIVE should reject the duplicate execution.
-
-5. Batch Simulation
-Compare the baseline strategy with REVIVE.
-
-The key result:
-
-₹143,905 → ₹378,192 net recovered
-
-+₹234,287 incremental net recovery
-
-6. Decision Audit
-Open the audit ledger and trace the decision, execution status, idempotency key, and hash chain.
-
-Why REVIVE?
-Most payment recovery systems start with:
-
-"Should we retry?"
-
-REVIVE asks:
-
-"What is the best recovery action, is it economically justified, is it policy-compliant, and should we execute it at all?"
-
-REVIVE combines:
-
-AI prediction + customer context + deterministic policy + unit economics + bounded execution + idempotency + auditability
-
-into one recovery workflow.
-
-Current System
-REVIVE is built as a Streamlit-based demonstration application with a Python decision engine.
-
-The main components are:
-
-Decision Engine — evaluates transactions and recovery actions
-
-ML Model — estimates recovery probability
-
-Customer Memory — provides customer-level context
-
-Policy Engine — applies deterministic recovery rules
-
-Execution Simulator — performs bounded simulated recovery
-
-Audit Store — records decisions and execution history
-
-Analytics — provides recovery and batch-level metrics
+The audit layer records what happened.
 
 Limitations
-This project uses synthetic payment and customer data.
+REVIVE is a demonstration system.
 
-The execution layer is a simulation and does not move real money or interact with a live payment gateway.
+All transaction, customer, and recovery data are synthetic.
 
-The purpose of REVIVE is to demonstrate the architecture and decision-making approach for an AI revenue recovery system.
+The execution layer is simulated.
+
+No real money is moved.
+
+The system is not connected to a live payment gateway.
+
+Batch results are demonstration results produced from the included dataset.
+
+The deterministic simulation uses a fixed random seed for reproducibility.
 
 Built For
-Razorpay AI Buildathon 2026 — AI Revenue Recovery
+Razorpay AI Buildathon 2026 — AI Revenue Recovery Track
 
-REVIVE focuses on one idea:
+REVIVE is built around a simple idea:
 
-Don't just retry failed payments. Decide how to recover the revenue intelligently.
+A failed payment is not necessarily lost revenue.
 
-Synthetic Data Disclaimer
-All transactions, customers, recovery outcomes, and financial values shown in this project are synthetic.
+Detect the opportunity.
 
-They are used solely to demonstrate the revenue recovery workflow and system behavior.
+Choose the right intervention.
+
+Check whether it is worth doing.
+
+Execute within boundaries.
+
+Prevent duplicates.
+
+And leave evidence behind.
+
+REVIVE
+Don't just retry. Recover intelligently.
