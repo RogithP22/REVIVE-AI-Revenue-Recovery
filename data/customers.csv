@@ -1,0 +1,51 @@
+customer_id,customer_segment,risk_tier,total_transactions,successful_transactions,failed_transactions,lifetime_value,preferred_payment_method
+CUST_1001,Consumer,Low,61,46,15,59886.0,UPI
+CUST_1002,Enterprise,High,33,30,3,69925.0,UPI
+CUST_1003,Consumer,Medium,73,52,21,135608.0,Credit Card
+CUST_1004,Consumer,Low,51,39,12,134981.0,Debit Card
+CUST_1005,Consumer,Low,60,48,12,16394.0,Net Banking
+CUST_1006,SMB,Low,16,15,1,13792.0,Wallet
+CUST_1007,Enterprise,Medium,18,16,2,125174.0,Credit Card
+CUST_1008,Consumer,Low,53,40,13,40920.0,UPI
+CUST_1009,SMB,Low,13,11,2,57995.0,UPI
+CUST_1010,Consumer,High,72,54,18,104299.0,Credit Card
+CUST_1011,Enterprise,Low,57,42,15,6016.0,Wallet
+CUST_1012,Enterprise,Medium,62,49,13,119752.0,UPI
+CUST_1013,Enterprise,Low,18,17,1,141330.0,UPI
+CUST_1014,Consumer,Medium,17,14,3,139633.0,UPI
+CUST_1015,Consumer,Medium,50,38,12,118569.0,UPI
+CUST_1016,Consumer,Low,32,24,8,15965.0,Net Banking
+CUST_1017,Enterprise,Medium,74,71,3,103806.0,Debit Card
+CUST_1018,Consumer,Low,36,27,9,28419.0,UPI
+CUST_1019,SMB,Low,72,65,7,92939.0,Net Banking
+CUST_1020,SMB,Medium,32,25,7,67623.0,Credit Card
+CUST_1021,Consumer,Low,37,35,2,114556.0,Net Banking
+CUST_1022,Consumer,Low,37,33,4,31105.0,UPI
+CUST_1023,SMB,Medium,71,70,1,142848.0,Debit Card
+CUST_1024,Enterprise,Low,12,9,3,124101.0,UPI
+CUST_1025,SMB,High,60,50,10,98557.0,UPI
+CUST_1026,Enterprise,Low,61,44,17,57733.0,Credit Card
+CUST_1027,Enterprise,High,12,11,1,31736.0,Wallet
+CUST_1028,SMB,Medium,63,58,5,55859.0,UPI
+CUST_1029,Consumer,Medium,79,56,23,123906.0,UPI
+CUST_1030,SMB,High,47,39,8,94045.0,Credit Card
+CUST_1031,Enterprise,Low,25,24,1,56663.0,UPI
+CUST_1032,Consumer,Low,29,25,4,39754.0,Debit Card
+CUST_1033,Enterprise,High,29,21,8,76295.0,Credit Card
+CUST_1034,SMB,Low,10,7,3,52254.0,Credit Card
+CUST_1035,SMB,Low,51,48,3,112512.0,Credit Card
+CUST_1036,Enterprise,Medium,11,10,1,122796.0,Net Banking
+CUST_1037,SMB,Medium,18,17,1,71690.0,Net Banking
+CUST_1038,Consumer,Low,63,62,1,37711.0,Debit Card
+CUST_1039,Enterprise,Low,34,32,2,7869.0,UPI
+CUST_1040,Enterprise,Low,70,61,9,96412.0,UPI
+CUST_1041,Consumer,Low,17,14,3,112450.0,UPI
+CUST_1042,Consumer,Low,31,25,6,141967.0,Credit Card
+CUST_1043,Consumer,Low,30,29,1,98179.0,Debit Card
+CUST_1044,Enterprise,Medium,28,24,4,129123.0,UPI
+CUST_1045,Consumer,Medium,55,50,5,38828.0,Net Banking
+CUST_1046,Consumer,High,55,50,5,129019.0,UPI
+CUST_1047,SMB,Low,41,34,7,31641.0,Credit Card
+CUST_1048,Consumer,Low,63,60,3,77991.0,Credit Card
+CUST_1049,SMB,Low,32,30,2,110864.0,Debit Card
+CUST_1050,SMB,Medium,57,50,7,34592.0,Credit Card
