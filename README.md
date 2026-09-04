@@ -11,7 +11,7 @@ Instead of blindly retrying a failed payment, REVIVE looks at the transaction, f
 ## Live Demo
 
 **Try REVIVE Live:**  
-https://revive-ai-revenue-recovery.streamlit.app/
+https://revive-ai-revenue-recovery-abghyzdosxdryessv7giuz.streamlit.app/
 
 ### What to Try
 
